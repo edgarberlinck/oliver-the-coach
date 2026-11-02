@@ -31,8 +31,10 @@ Each sentence he says needs a **buzzword**, and you're the one who types it.
 | Mythical Coach Power (10x combo) | Things are going badly |
 |:---:|:---:|
 | ![Mythical mode](docs/screenshots/mythic.png) | ![Tomatoes on stage](docs/screenshots/miss.png) |
-| **Main menu** | **Talk over** |
-| ![Main menu](docs/screenshots/menu.png) | ![Game over](docs/screenshots/over.png) |
+| **Steve Mode (100x combo)** | **Main menu** |
+| ![Steve mode](docs/screenshots/steve.png) | ![Main menu](docs/screenshots/menu.png) |
+| **Talk over** | |
+| ![Game over](docs/screenshots/over.png) | |
 
 ## 🕹️ How to play
 
@@ -41,7 +43,8 @@ Each sentence he says needs a **buzzword**, and you're the one who types it.
 | Type each letter of the highlighted word | Sparks fly from Oliver's hands |
 | Finish a word with **no mistakes** | **+1 combo**, applause, fire cannons, people join |
 | Reach **10x combo** | 🔥 **MYTHICAL COACH POWER**: Oliver catches fire, strobes, confetti, **points x10** |
-| Make a typo | Combo resets to 0, power drops, maybe a tomato |
+| Reach **100x combo** | 🍏 **STEVE MODE**: a white flash, a mid-air spin, and Oliver comes down as a black-turtleneck, round-glasses keynote legend. The stage goes calm and minimal, and **points x1000** |
+| Make a typo | Combo resets to 0, power drops, maybe a tomato. In Steve mode: *"STEVE HAS LEFT THE BUILDING"* |
 | Run out of time | Big power loss, people walk out, more stuff gets thrown |
 | Power reaches 0 | Talk over. *"Refunds are a limiting belief."* |
 
@@ -50,7 +53,8 @@ There is no backspace. Every **8 words** the level goes up: you get less time pe
 ### Scoring
 
 ```
-points = (40 + letters × 10) × tier × (1 + time_left / time_total) × (10 if mythical else 1)
+points = (40 + letters × 10) × tier × (1 + time_left / time_total) × multiplier
+multiplier = 1000 at 100x combo (Steve mode), 10 at 10x combo (Mythical), otherwise 1
 ```
 
 Your best score is saved in `localStorage`.
@@ -72,9 +76,9 @@ It runs in any modern desktop browser with WebGL2. Check **Oliver's voice** on t
 - **Stage**: wooden floor, red speaker circle, curtains with folds, a giant screen showing the current word, speaker stacks, footlights, and an LED strip.
 - **Lighting**: six moving-head spotlights on a truss with visible light beams, a follow spot with shadows, colored uplights on the curtain, and bloom.
 - **Fire cannons**: four of them, shooting flames, sparks and smoke, with flickering point lights.
-- **Oliver**: built entirely in code. Suit, tie, pocket square, glasses, headset mic, a large hair quiff, and three glowing rings orbiting him. He walks, gestures, gets hit, celebrates, slumps when power is low, and catches fire in Mythical mode.
+- **Oliver**: built entirely in code. Suit, tie, pocket square, glasses, headset mic, a large hair quiff, and three glowing rings orbiting him. He walks, gestures, gets hit, celebrates, slumps when power is low, and catches fire in Mythical mode. In Steve mode he swaps to a black turtleneck, jeans, grey sneakers, rimless round glasses, grey stubble and a presentation clicker. He walks calmly, the lights go white and minimal, the screen turns into a clean black keynote slide, and his rings become a *Reality Distortion Field*.
 - **Audience**: up to 136 people with varied looks. They follow Oliver with their heads, clap, cheer, boo, and throw things. Leavers stomp out through the door; newcomers walk in and find a seat.
-- **Audio**: everything is generated in the browser with WebAudio (keyboard clicks, applause, boos, splats, whooshes, a level-up jingle, and a keynote beat that speeds up in Mythical mode). There are no audio files.
+- **Audio**: everything is generated in the browser with WebAudio (keyboard clicks, applause, boos, splats, whooshes, a level-up jingle, a keynote beat that speeds up in Mythical mode, and a big chord swell with calm keynote music in Steve mode). There are no audio files.
 
 ## 🗂️ Project structure
 

@@ -338,42 +338,47 @@ const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpCol = new THRE
 const MYTHIC_COLS = [new THREE.Color(0xff3000), new THREE.Color(0xff8a00), new THREE.Color(0xffd000)];
 
 export function updateWorld(world, dt, t, s) {
-  // s = { oliver: Vector3, mythic, crazy (0..1), power (0..1), excite (0..1) }
-  const speed = 0.4 + s.crazy * 1.8 + (s.mythic ? 2 : 0);
+  // s = { oliver: Vector3, mythic, jobs, crazy (0..1), power (0..1), excite (0..1) }
+  const jobs = !!s.jobs, mythic = s.mythic && !jobs;
+  const speed = jobs ? 0.25 : 0.4 + s.crazy * 1.8 + (mythic ? 2 : 0);
   world.t += dt * speed;
   const wt = world.t;
   world.heads.forEach((h, k) => {
     let tx, tz;
-    if (s.mythic && k % 2 === 0) { tx = s.oliver.x + Math.sin(wt * 3 + k) * 0.5; tz = s.oliver.z; }
+    if (mythic && k % 2 === 0) { tx = s.oliver.x + Math.sin(wt * 3 + k) * 0.5; tz = s.oliver.z; }
+    else if (jobs) { tx = s.oliver.x + (k - 2.5) * 3.2; tz = -5 + (k % 2 ? 1 : -1) * 1.5; }
     else { tx = Math.sin(wt * 0.7 + h.phase) * 8; tz = -4 + Math.cos(wt * 0.9 + h.phase * 1.7) * 4 + (k % 3 === 0 ? 6 : 0); }
     const ty = tz > 0 ? 0.5 : LAYOUT.stageTop;
     h.spot.target.position.set(tx, ty, tz);
     let col = h.base;
-    if (s.mythic) { col = MYTHIC_COLS[(k + Math.floor(t * 6)) % 3]; }
+    if (jobs) { col = tmpCol.setHSL(0.6, 0.15, 0.92); }
+    else if (mythic) { col = MYTHIC_COLS[(k + Math.floor(t * 6)) % 3]; }
     else if (s.power < 0.3) { col = tmpCol.copy(h.base).lerp(new THREE.Color(0x203060), 0.7); }
     h.spot.color.copy(col); h.lens.material.color.copy(col);
-    const strobe = s.mythic ? (Math.sin(t * 30 + k) > -0.2 ? 1 : 0.15) : 1;
-    const inten = (0.35 + s.power * 0.8) * strobe;
+    const strobe = mythic ? (Math.sin(t * 30 + k) > -0.2 ? 1 : 0.15) : 1;
+    const inten = jobs ? 0.3 : (0.35 + s.power * 0.8) * strobe;
     h.spot.intensity = 500 * inten;
-    h.beam.aim(h.spot.position, h.spot.target.position, 0.16 * inten + s.excite * 0.08, col);
+    h.beam.aim(h.spot.position, h.spot.target.position, jobs ? 0.07 : 0.16 * inten + s.excite * 0.08, col);
   });
 
   // follow spot on Oliver
   tmpV.set(s.oliver.x, LAYOUT.stageTop, s.oliver.z);
   world.follow.target.position.lerp(tmpV, Math.min(1, dt * 6));
-  world.follow.intensity = (900 + s.power * 700) * (s.mythic ? 0.45 : 1);
+  world.follow.intensity = (900 + s.power * 700) * (mythic ? 0.45 : jobs ? 0.4 : 1);
   world.followBeam.aim(world.follow.position, tmpV2.copy(world.follow.target.position), 0.11, null);
 
   // house lights dim as power rises (focus on stage) and when things go bad
-  for (const h of world.house) h.intensity = 30 + (1 - s.power) * 20;
+  for (const h of world.house) h.intensity = jobs ? 15 : 30 + (1 - s.power) * 20;
   world.uplights.forEach((u, k) => {
-    u.intensity = 120 + Math.sin(t * 2 + k) * 40;
-    if (s.mythic) u.color.setHSL(0.03 + 0.05 * Math.sin(t * 4 + k), 1, 0.5);
+    u.intensity = jobs ? 90 : 120 + Math.sin(t * 2 + k) * 40;
+    if (jobs) u.color.setHSL(0.62, 0.5, 0.75);
+    else if (mythic) u.color.setHSL(0.03 + 0.05 * Math.sin(t * 4 + k), 1, 0.5);
     else u.color.setHSL(k % 2 ? 0.92 : 0.68, 1, 0.5);
   });
 
   // LED strip
-  if (s.mythic) world.ledMat.color.setHSL(0.05 + 0.04 * Math.sin(t * 10), 1, 0.55);
+  if (jobs) world.ledMat.color.setRGB(0.95, 0.96, 1);
+  else if (mythic) world.ledMat.color.setHSL(0.05 + 0.04 * Math.sin(t * 10), 1, 0.55);
   else if (s.power < 0.3) world.ledMat.color.setHSL(0, 1, 0.3 + 0.2 * Math.abs(Math.sin(t * 5)));
   else world.ledMat.color.setHSL((t * 0.05) % 1, 0.9, 0.55);
 
@@ -387,9 +392,10 @@ export function updateWorld(world, dt, t, s) {
   d.light.intensity = d.open * 25;
 }
 
-export function drawScreen(world, { word = '', typed = 0, mythic = false, combo = 0, level = 1, t = 0, title = '' }) {
+export function drawScreen(world, { word = '', typed = 0, mythic = false, jobs = false, combo = 0, level = 1, t = 0, title = '' }) {
   const { ctx: g, canvas: c, tex } = world.screen;
   const w = c.width, h = c.height;
+  if (jobs) { drawJobsScreen(g, w, h, word, typed, combo, title); tex.needsUpdate = true; return; }
   const bg = g.createLinearGradient(0, 0, w, h);
   if (mythic) {
     bg.addColorStop(0, '#300000'); bg.addColorStop(0.5 + 0.2 * Math.sin(t * 3), '#a02000'); bg.addColorStop(1, '#200000');
@@ -428,4 +434,29 @@ export function drawScreen(world, { word = '', typed = 0, mythic = false, combo 
   g.textAlign = 'center'; g.font = 'italic 30px Arial, sans-serif'; g.fillStyle = 'rgba(255,255,255,0.75)';
   g.fillText(title || 'OLIVER · YOUR QUANTUM COACH', w / 2, h - 50);
   tex.needsUpdate = true;
+}
+
+// Minimal keynote slide: black, thin white type, lots of space.
+function drawJobsScreen(g, w, h, word, typed, combo, title) {
+  const bg = g.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w * 0.7);
+  bg.addColorStop(0, '#1a1c22'); bg.addColorStop(1, '#000000');
+  g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.shadowBlur = 0; g.textBaseline = 'middle';
+  const thin = (px) => `200 ${px}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  g.textAlign = 'right'; g.font = thin(30); g.fillStyle = 'rgba(255,255,255,0.55)';
+  g.fillText(`x1000 · ${combo}`, w - 40, 56);
+  g.textAlign = 'center';
+  if (word) {
+    let size = 150; g.font = thin(size);
+    while (g.measureText(word).width > w - 140 && size > 50) { size -= 6; g.font = thin(size); }
+    const total = g.measureText(word).width; let x = w / 2 - total / 2;
+    g.textAlign = 'left';
+    for (let i = 0; i < word.length; i++) {
+      const ch = word[i];
+      g.fillStyle = i < typed ? '#ffffff' : 'rgba(255,255,255,0.35)';
+      g.fillText(ch, x, h / 2 + 10); x += g.measureText(ch).width;
+    }
+  }
+  g.textAlign = 'center'; g.font = thin(34); g.fillStyle = 'rgba(255,255,255,0.8)';
+  g.fillText(title || 'One more thing...', w / 2, h - 60);
 }

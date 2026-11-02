@@ -213,3 +213,15 @@ export const GAME_OVER = [
   "\"I'll be back. With a new book.\"", "\"Failure is just success in progress.\"",
   "\"The universe needed me somewhere else.\"", "\"Refunds are a limiting belief.\"",
 ];
+// Steve mode (100x combo): parody keynote lines.
+export const JOBS_LINES = [
+  "And one more thing... {w}.", "It just works. {w}.", "Think different. Think {w}.",
+  "Today, we're reinventing {w}.", "This is the best {w} we've ever made.", "Boom. {w}.",
+  "We think you're going to love {w}.", "It's magical. It's {w}.", "Stay hungry. Stay {w}.",
+  "Three revolutionary products: an iPod, a phone, and {w}.", "Insanely great {w}.",
+  "Design is not how it looks. It's {w}.", "Here's to the crazy ones. And to {w}.",
+];
+export const JOBS_CHEERS = ["Boom.", "Isn't that incredible?", "It just works.", "Insanely great.", "Magical."];
+export const JOBS = [
+  "ONE MORE THING...", "REALITY DISTORTION FIELD: ON", "THINK DIFFERENT.",
+];

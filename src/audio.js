@@ -133,6 +133,19 @@ export class Audio {
     this.whoosh(true);
   }
 
+  // Big shimmering major-chord swell for the Steve transformation.
+  jobsChime() {
+    if (!this.ok) return; const t = this.ctx.currentTime;
+    [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = i % 2 ? 'sine' : 'triangle'; o.frequency.value = 261.63 * Math.pow(2, s / 12);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, t + 0.4 + i * 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t + 3.3);
+    });
+    this.whoosh(true);
+  }
+
   levelUp() {
     if (!this.ok) return; const t = this.ctx.currentTime;
     [0, 7, 12].forEach((s, i) => this._osc('square', 440 * Math.pow(2, s / 12), t + i * 0.1, 0.2, 0.06));
@@ -145,12 +158,22 @@ export class Audio {
   }
 
   // Simple driving keynote beat; tempo & intensity scale with game state.
-  music(playing, intensity, mythic) {
+  // Steve mode swaps to a calm, minimal piano-ish keynote groove.
+  music(playing, intensity, mythic, jobs = false) {
     if (!this.ok || !playing) return;
-    const ctx = this.ctx, bpm = mythic ? 128 : 112, spb = 60 / bpm / 2;
+    const ctx = this.ctx, bpm = jobs ? 96 : mythic ? 128 : 112, spb = 60 / bpm / 2;
     if (this._nextBeat < ctx.currentTime) this._nextBeat = ctx.currentTime + 0.05;
     while (this._nextBeat < ctx.currentTime + 0.2) {
       const t = this._nextBeat, s = this._step % 16;
+      if (jobs) {
+        if (s % 8 === 0) { const o = this._osc('sine', 90, t, 0.4, 0.6, this.musicGain); o.frequency.exponentialRampToValueAtTime(45, t + 0.3); }
+        if (s % 4 === 2) this._noise(t, 0.03, 0.06, 'highpass', 9000, 1, this.musicGain);
+        const prog = [0, 0, 5, 5, -3, -3, 7, 7][Math.floor(this._step / 16) % 8];
+        if (s % 4 === 0) [0, 4, 7].forEach(n => this._osc('sine', 261.63 * Math.pow(2, (n + prog) / 12), t, 0.6, 0.035, this.musicGain));
+        if (s % 2 === 1) this._osc('triangle', 523.25 * Math.pow(2, ([12, 7, 4, 7][(s >> 1) % 4] + prog) / 12), t, 0.25, 0.025, this.musicGain);
+        this._nextBeat += spb; this._step++;
+        continue;
+      }
       if (s % 4 === 0) { const o = this._osc('sine', 120, t, 0.25, 0.9, this.musicGain); o.frequency.exponentialRampToValueAtTime(40, t + 0.2); }
       if (s % 2 === 1 || mythic) this._noise(t, 0.04, intensity * 0.25 + 0.05, 'highpass', 7000, 1, this.musicGain);
       if (s === 4 || s === 12) this._noise(t, 0.15, 0.35, 'bandpass', 1800, 0.8, this.musicGain);

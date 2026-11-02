@@ -9,7 +9,7 @@ import { Oliver } from './oliver.js';
 import { Audience } from './audience.js';
 import { Particles, Projectiles } from './fx.js';
 import { Audio } from './audio.js';
-import { BY_TIER, LINES, CHEERS, FAILS, MYTHIC, GAME_OVER } from './words.js';
+import { BY_TIER, LINES, CHEERS, FAILS, MYTHIC, GAME_OVER, JOBS_LINES, JOBS_CHEERS, JOBS } from './words.js';
 
 // ---------- renderer / scene ----------
 const canvas = document.getElementById('c');
@@ -59,7 +59,7 @@ const ui = {
   hud: $('hud'), menu: $('menu'), over: $('over'), score: $('score'), multi: $('multi'), powerFill: $('powerFill'),
   level: $('levelTag'), crowd: $('crowd'), combo: $('combo'), flash: $('flash'), bubble: $('bubble'),
   card: $('wordCard'), word: $('word'), timerFill: $('timerFill'), best: $('best'), stats: $('stats'), quote: $('overQuote'),
-  optMusic: $('optMusic'), optVoice: $('optVoice'),
+  optMusic: $('optMusic'), optVoice: $('optVoice'), whiteout: $('whiteout'),
 };
 ui.best.textContent = (+localStorage.getItem('oliverBest') || 0).toLocaleString();
 
@@ -71,9 +71,12 @@ function flash(text, color = '#fff') {
 // ---------- game state ----------
 const G = {
   state: 'menu', score: 0, combo: 0, bestCombo: 0, power: 60, level: 1, words: 0, misses: 0, maxCrowd: 0,
-  word: null, idx: 0, errors: 0, timeLeft: 0, timeTotal: 1, line: '', recent: [], mythic: false, shake: 0, gap: 0,
+  word: null, idx: 0, errors: 0, timeLeft: 0, timeTotal: 1, line: '', recent: [], mythic: false, jobs: false, shake: 0, gap: 0,
   intro: [], pyroTimer: 0, screenTimer: 0, crazy: 0, overTimer: 0,
 };
+const MYTHIC_COMBO = 10, JOBS_COMBO = 100;
+const multiplier = () => (G.jobs ? 1000 : G.mythic ? 10 : 1);
+const pick = arr => arr[(Math.random() * arr.length) | 0];
 
 function pickWord() {
   if (G.intro.length) return G.intro.shift();
@@ -98,7 +101,7 @@ function nextWord() {
   G.word = pickWord(); G.idx = 0; G.errors = 0;
   const speed = Math.max(0.42, 1 - (G.level - 1) * 0.065);
   G.timeTotal = G.timeLeft = (1.7 + G.word.text.length * 0.36) * speed + (G.word.tier === 3 ? 0.6 : 0);
-  G.line = LINES[(Math.random() * LINES.length) | 0];
+  G.line = pick(G.jobs ? JOBS_LINES : LINES);
   ui.bubble.innerHTML = G.line.replace('{w}', `<b>${G.word.text}</b>`);
   speak(G.line.replace('{w}', G.word.text));
   renderWord(); refreshScreen();
@@ -112,23 +115,43 @@ function renderWord() {
 function refreshScreen(title) {
   drawScreen(world, {
     word: G.state === 'menu' ? 'PRESS ENTER' : (G.word ? G.word.text : ''), typed: G.state === 'playing' ? G.idx : 0,
-    mythic: G.mythic, combo: G.combo, level: G.level, t: performance.now() / 1000,
-    title: title || (G.mythic ? 'MYTHICAL COACH POWER · POINTS x10' : undefined),
+    mythic: G.mythic, jobs: G.jobs, combo: G.combo, level: G.level, t: performance.now() / 1000,
+    title: title || (G.jobs ? 'One more thing...' : G.mythic ? 'MYTHICAL COACH POWER · POINTS x10' : undefined),
   });
 }
 
 function updateHud() {
   ui.score.textContent = G.score.toLocaleString();
-  ui.multi.textContent = G.mythic ? 'x10 MYTHICAL' : 'x1';
-  ui.multi.classList.toggle('mythic', G.mythic);
-  ui.combo.textContent = `COMBO ${G.combo}${G.combo >= 10 ? ' 🔥' : ''}`;
-  ui.combo.classList.toggle('mythic', G.mythic);
+  ui.multi.textContent = G.jobs ? 'x1000 STEVE MODE' : G.mythic ? 'x10 MYTHICAL' : 'x1';
+  ui.multi.classList.toggle('mythic', G.mythic && !G.jobs);
+  ui.multi.classList.toggle('jobs', G.jobs);
+  ui.combo.textContent = `COMBO ${G.combo}${G.jobs ? ' 🍏' : G.combo >= MYTHIC_COMBO ? ' 🔥' : ''}`;
+  ui.combo.classList.toggle('mythic', G.mythic && !G.jobs);
+  ui.combo.classList.toggle('jobs', G.jobs);
   ui.powerFill.style.width = `${Math.max(0, G.power)}%`;
   ui.powerFill.classList.toggle('low', G.power < 30 && !G.mythic);
-  ui.powerFill.classList.toggle('mythic', G.mythic);
+  ui.powerFill.classList.toggle('mythic', G.mythic && !G.jobs);
+  ui.powerFill.classList.toggle('jobs', G.jobs);
   ui.level.textContent = `LEVEL ${G.level}`;
   ui.crowd.textContent = audience.count;
-  ui.card.classList.toggle('mythic', G.mythic);
+  ui.card.classList.toggle('mythic', G.mythic && !G.jobs);
+  ui.card.classList.toggle('jobs', G.jobs);
+  document.body.classList.toggle('jobs', G.jobs);
+}
+
+function whiteout() {
+  ui.whiteout.classList.remove('show'); void ui.whiteout.offsetWidth; ui.whiteout.classList.add('show');
+}
+
+// Reality distortion field collapses: back to plain old Oliver.
+function loseJobs(gameOver = false) {
+  if (!G.jobs) return;
+  G.jobs = false;
+  oliver.transform(false);
+  const p = oliver.root.position;
+  for (let k = 0; k < 80; k++) smoke.emit('smoke', p.x + rnd(-0.8, 0.8), p.y + rnd(0.2, 2.8), p.z + rnd(-0.8, 0.8), rnd(-0.6, 0.6), rnd(0.3, 1.4), rnd(-0.6, 0.6), rnd(1.5, 3), rnd(0.8, 1.6));
+  if (!gameOver) flash('STEVE HAS LEFT THE BUILDING', '#e8ecff');
+  audio.whoosh(true);
 }
 
 // ---------- FX helpers ----------
@@ -143,9 +166,12 @@ function pyro(i, power = 1) {
 function pyroAll(power) { world.pyros.forEach((_, i) => pyro(i, power)); audio.whoosh(power > 1); G.shake = Math.max(G.shake, 0.15 * power); }
 
 const CONF_COLS = [0xff2a6d, 0x05d9e8, 0xffd000, 0x39ff9a, 0xb14aff, 0xffffff].map(c => new THREE.Color(c));
-function confettiBurst(n) {
+const JOBS_COLS = [0xffffff, 0xe6e8ef, 0xc8ccd6, 0xf5f0e6].map(c => new THREE.Color(c));
+const JOBS_WHITE = new THREE.Color(0xeef2ff);
+function confettiBurst(n, silver = false) {
+  const cols = silver ? JOBS_COLS : CONF_COLS;
   for (let k = 0; k < n; k++) {
-    confetti.emit('confetti', rnd(-11, 11), rnd(10, 12.5), rnd(-6, 9), rnd(-1, 1), rnd(-1, 0), rnd(-1, 1), rnd(5, 8), rnd(0.06, 0.1), CONF_COLS[(Math.random() * CONF_COLS.length) | 0]);
+    confetti.emit('confetti', rnd(-11, 11), rnd(10, 12.5), rnd(-6, 9), rnd(-1, 1), rnd(-1, 0), rnd(-1, 1), rnd(5, 8), rnd(0.06, 0.1), cols[(Math.random() * cols.length) | 0]);
   }
 }
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -165,7 +191,8 @@ function throwStuff(n) {
 // ---------- rules ----------
 function startGame() {
   audio.init(); audio.setEnabled(ui.optMusic.checked);
-  Object.assign(G, { state: 'playing', score: 0, combo: 0, bestCombo: 0, power: 60, level: 1, words: 0, misses: 0, mythic: false, crazy: 0, gap: 0 });
+  Object.assign(G, { state: 'playing', score: 0, combo: 0, bestCombo: 0, power: 60, level: 1, words: 0, misses: 0, mythic: false, jobs: false, crazy: 0, gap: 0 });
+  if (oliver.isJobs || oliver.morphT > 0) { oliver.morphT = 0; oliver.setLook(false); }
   G.intro = ['coffee', 'uber', 'tesla', 'performance', 'Elon Musk'].sort(() => Math.random() - 0.5).map(text => ({ text, tier: text.length <= 6 ? 1 : 2 }));
   audience.reset(64);
   G.maxCrowd = audience.count;
@@ -177,12 +204,13 @@ function startGame() {
 
 function typo() {
   G.errors++; G.misses++;
-  const wasMythic = G.mythic;
+  const wasMythic = G.mythic, wasJobs = G.jobs;
   G.combo = 0; G.mythic = false;
   G.power -= 3 + G.level * 0.5;
   audio.error();
   ui.card.classList.remove('err'); void ui.card.offsetWidth; ui.card.classList.add('err');
-  if (wasMythic) { flash('MYTHIC POWER LOST', '#ff4060'); refreshScreen(); }
+  if (wasJobs) { loseJobs(); refreshScreen(); }
+  else if (wasMythic) { flash('MYTHIC POWER LOST', '#ff4060'); refreshScreen(); }
   if (Math.random() < 0.35) throwStuff(1);
   if (Math.random() < 0.25) audience.leave(1);
   if (Math.random() < 0.3) audience.boo();
@@ -191,12 +219,13 @@ function typo() {
 
 function timeout() {
   G.misses++;
+  const wasJobs = G.jobs;
   G.combo = 0; G.mythic = false;
   G.power -= 12 + G.level * 1.5;
   audio.boo(); audience.boo();
   audience.leave(1 + ((Math.random() * 3) | 0) + (G.power < 30 ? 2 : 0));
   throwStuff(1 + ((Math.random() * 2) | 0) + (G.power < 30 ? 1 : 0));
-  flash('TOO SLOW!', '#ff4060');
+  if (wasJobs) loseJobs(); else flash('TOO SLOW!', '#ff4060');
   ui.bubble.textContent = FAILS[(Math.random() * FAILS.length) | 0];
   updateHud();
   if (!checkOver()) G.gap = 0.9;
@@ -208,17 +237,32 @@ function completeWord() {
   G.words++;
   if (clean) {
     G.combo++; G.bestCombo = Math.max(G.bestCombo, G.combo);
-    const becameMythic = G.combo >= 10 && !G.mythic;
-    if (G.combo >= 10) G.mythic = true;
-    const mult = G.mythic ? 10 : 1;
+    const becameMythic = G.combo >= MYTHIC_COMBO && !G.mythic;
+    const becameJobs = G.combo >= JOBS_COMBO && !G.jobs;
+    if (G.combo >= MYTHIC_COMBO) G.mythic = true;
+    if (G.combo >= JOBS_COMBO) G.jobs = true;
+    const mult = multiplier();
     const pts = Math.round((40 + w.text.length * 10) * w.tier * (1 + G.timeLeft / G.timeTotal)) * mult;
     G.score += pts;
     G.power = Math.min(100, G.power + 4 + w.tier + (G.mythic ? 2 : 0));
-    audience.cheer(1 + G.combo / 5);
-    audience.join(1 + (Math.random() < 0.5 ? 1 : 0) + (G.combo >= 5 ? 1 : 0) + (G.mythic ? 2 : 0));
-    audio.success(G.combo); audio.applause(1 + G.combo / 5);
+    audience.cheer(G.jobs ? 3 : 1 + G.combo / 5);
+    audience.join(1 + (Math.random() < 0.5 ? 1 : 0) + (G.combo >= 5 ? 1 : 0) + (G.mythic ? 2 : 0) + (G.jobs ? 2 : 0));
+    audio.success(G.combo); audio.applause(G.jobs ? 3 : 1 + G.combo / 5);
     oliver.cheer();
-    if (becameMythic) {
+    if (becameJobs) {
+      whiteout(); flash(pick(JOBS), '#ffffff');
+      audio.jobsChime(); oliver.transform(true); G.shake = 0.3;
+      const p = oliver.root.position;
+      for (let k = 0; k < 400; k++) {
+        const a = Math.random() * Math.PI * 2, s = rnd(2, 7);
+        fire.emit('glow', p.x, p.y + rnd(0.5, 2.8), p.z, Math.cos(a) * s, rnd(-1, 3), Math.sin(a) * s, rnd(0.8, 1.6), rnd(0.05, 0.12), JOBS_WHITE);
+      }
+      confettiBurst(1200, true); audience.join(12);
+      ui.bubble.textContent = 'And one more thing...';
+    } else if (G.jobs) {
+      confettiBurst(150, true);
+      if (Math.random() < 0.3) ui.bubble.textContent = pick(JOBS_CHEERS);
+    } else if (becameMythic) {
       flash('🔥 MYTHICAL COACH POWER 🔥', '#ffb020');
       audio.mythic(); oliver.goWild(); pyroAll(2); confettiBurst(900); G.shake = 0.6;
       ui.bubble.textContent = MYTHIC[(Math.random() * MYTHIC.length) | 0];
@@ -241,6 +285,7 @@ function completeWord() {
 function checkOver() {
   if (G.power > 0) return false;
   G.power = 0; G.state = 'over'; G.mythic = false; G.overTimer = 1;
+  loseJobs(true);
   setTimeout(() => { G.overTimer = 0; ui.over.classList.remove('hidden'); ui.hud.classList.add('hidden'); }, 2200);
   audio.gameOver(); audience.boo();
   audience.leave(Math.ceil(audience.count * 0.6)); throwStuff(6);
@@ -269,7 +314,10 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === expected) {
     G.idx++; audio.key();
     const hp = new THREE.Vector3(); oliver.handWorld(G.idx % 2, hp);
-    for (let k = 0; k < 6; k++) fire.emit('spark', hp.x, hp.y, hp.z, rnd(-2, 2), rnd(1, 4), rnd(-2, 2), rnd(0.3, 0.6), 0.07);
+    for (let k = 0; k < 6; k++) {
+      if (G.jobs) fire.emit('glow', hp.x, hp.y, hp.z, rnd(-1, 1), rnd(0.5, 2), rnd(-1, 1), rnd(0.4, 0.8), 0.04, JOBS_WHITE);
+      else fire.emit('spark', hp.x, hp.y, hp.z, rnd(-2, 2), rnd(1, 4), rnd(-2, 2), rnd(0.3, 0.6), 0.07);
+    }
     if (G.idx >= G.word.text.length) completeWord();
     else { renderWord(); refreshScreen(); }
   } else typo();
@@ -287,7 +335,7 @@ refreshScreen();
 
 function frame(now) {
   timer.update(now);
-  const dt = Math.min(timer.getDelta(), 0.05), t = timer.getElapsed();
+  const dt = Math.max(0, Math.min(timer.getDelta(), 0.05)), t = timer.getElapsed();
 
   if (G.state === 'playing') {
     if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) nextWord(); }
@@ -297,7 +345,16 @@ function frame(now) {
       if (G.timeLeft <= 0) timeout();
     }
     G.crazy += (Math.min(1, G.combo / 10) - G.crazy) * Math.min(1, dt * 2);
-    if (G.mythic) {
+    if (G.jobs) {
+      G.screenTimer -= dt;
+      if (G.screenTimer <= 0) { G.screenTimer = 0.25; refreshScreen(); }
+      // gentle "magical" sparkles drifting around Steve
+      const p = oliver.root.position;
+      for (let k = 0; k < Math.ceil(dt * 30); k++) {
+        const a = Math.random() * Math.PI * 2, r = rnd(1.0, 1.6);
+        fire.emit('glow', p.x + Math.cos(a) * r, p.y + rnd(0.2, 3), p.z + Math.sin(a) * r, 0, rnd(0.3, 0.9), 0, rnd(1, 2), rnd(0.03, 0.06), JOBS_WHITE);
+      }
+    } else if (G.mythic) {
       G.pyroTimer -= dt;
       if (G.pyroTimer <= 0) { G.pyroTimer = 0.9; pyro((Math.random() * 4) | 0, 0.8); }
       G.screenTimer -= dt;
@@ -314,7 +371,7 @@ function frame(now) {
   const power01 = G.state === 'menu' ? 0.8 : Math.max(0, G.power) / 100;
 
   // Oliver on fire
-  if (G.mythic) {
+  if (G.mythic && !G.jobs) {
     // flames lick up around his silhouette (outside the body), crown of fire on the head, burning hands
     const n = Math.ceil(dt * 110);
     for (let k = 0; k < n; k++) {
@@ -327,28 +384,29 @@ function frame(now) {
     for (let i = 0; i < 2; i++) { oliver.handWorld(i, tmp); for (let k = 0; k < Math.ceil(dt * 35); k++) fire.emit('fire', tmp.x, tmp.y + 0.1, tmp.z, rnd(-0.3, 0.3), rnd(1, 2.5), rnd(-0.3, 0.3), rnd(0.2, 0.4), rnd(0.18, 0.3)); }
   }
 
-  oliver.update(dt, t, { crazy: G.crazy, mythic: G.mythic, power: power01, talking: G.state !== 'over' });
+  oliver.update(dt, t, { crazy: G.crazy, mythic: G.mythic, jobs: G.jobs, power: power01, talking: G.state !== 'over' });
   audience.update(dt, t, oliver.root.position);
-  updateWorld(world, dt, t, { oliver: oliver.pos, mythic: G.mythic, crazy: G.crazy, power: power01, excite: audience.excite });
+  updateWorld(world, dt, t, { oliver: oliver.pos, mythic: G.mythic, jobs: G.jobs, crazy: G.crazy, power: power01, excite: audience.excite });
   projectiles.update(dt);
   fire.update(dt); confetti.update(dt); smoke.update(dt);
   if (G.state === 'playing' && ((t * 4) | 0) !== frame.lastCrowd) { frame.lastCrowd = (t * 4) | 0; ui.crowd.textContent = audience.count; G.maxCrowd = Math.max(G.maxCrowd, audience.count); }
-  audio.music(G.state === 'playing', G.crazy, G.mythic);
+  audio.music(G.state === 'playing', G.crazy, G.mythic, G.jobs);
 
   // camera
   G.shake = Math.max(0, G.shake - dt * 1.5);
   const sway = G.state === 'menu' ? Math.sin(t * 0.15) * 4 : Math.sin(t * 0.1) * 1.2;
-  camera.position.set(CAM_BASE.x + sway + (Math.random() - 0.5) * G.shake, CAM_BASE.y + (Math.random() - 0.5) * G.shake - (G.mythic ? 0.8 : 0), CAM_BASE.z - (G.mythic ? 1.5 : 0));
-  look.x += (oliver.pos.x * 0.45 - look.x) * Math.min(1, dt * 2);
-  look.y += ((G.mythic ? 3.2 : 2.8) - look.y) * Math.min(1, dt * 2);
+  const hot = G.mythic && !G.jobs;
+  camera.position.set(CAM_BASE.x + sway + (Math.random() - 0.5) * G.shake, CAM_BASE.y + (Math.random() - 0.5) * G.shake - (hot ? 0.8 : G.jobs ? 1.0 : 0), CAM_BASE.z - (hot ? 1.5 : G.jobs ? 2 : 0));
+  look.x += (oliver.pos.x * (G.jobs ? 0.6 : 0.45) - look.x) * Math.min(1, dt * 2);
+  look.y += ((hot ? 3.2 : G.jobs ? 3.6 : 2.8) - look.y) * Math.min(1, dt * 2);
   camera.lookAt(look);
   oliver.cam.copy(camera.position);
-  const targetFov = G.mythic ? 38 : 42;
+  const targetFov = G.jobs ? 37 : hot ? 38 : 42;
   if (Math.abs(camera.fov - targetFov) > 0.01) { camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 2); camera.updateProjectionMatrix(); }
   const ps = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
   fire.setScale(ps); confetti.setScale(ps); smoke.setScale(ps);
-  bloom.strength = 0.75 + (G.mythic ? 0.12 : 0) + G.crazy * 0.08;
-  renderer.toneMappingExposure += ((G.mythic ? 0.9 : 1.1) - renderer.toneMappingExposure) * Math.min(1, dt * 2);
+  bloom.strength = G.jobs ? 0.6 : 0.75 + (hot ? 0.12 : 0) + G.crazy * 0.08;
+  renderer.toneMappingExposure += ((hot ? 0.9 : 1.1) - renderer.toneMappingExposure) * Math.min(1, dt * 2);
 
   composer.render();
   requestAnimationFrame(frame);

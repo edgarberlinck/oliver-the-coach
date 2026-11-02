@@ -36,6 +36,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #050208; c
   min-width: 380px; text-align: center; box-shadow: 0 0 40px rgba(80,180,255,.25); transition: border-color .2s; }
 #wordCard.err { animation: shake .3s; border-color: #ff3050; box-shadow: 0 0 40px rgba(255,40,60,.6); }
 #wordCard.mythic { border-color: #ff9a20; box-shadow: 0 0 50px rgba(255,110,0,.7); }
+/* Steve mode: minimal, silver, calm */
+#multi.jobs, #combo.jobs { color: #fff; font-weight: 300; letter-spacing: .08em; text-shadow: 0 0 12px rgba(220,230,255,.9); }
+#powerFill.jobs { background: linear-gradient(90deg, #9aa0ad, #f4f6fb, #c8ccd6); box-shadow: 0 0 25px rgba(235,240,255,.8); }
+#wordCard.jobs { background: rgba(0,0,0,.82); border-color: #e8ecf5; box-shadow: 0 0 50px rgba(230,236,255,.45); }
+#wordCard.jobs #word { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 200; }
+body.jobs #flash { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 200; letter-spacing: .06em; }
+#whiteout { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#whiteout.show { animation: whiteout 1.6s ease-out forwards; }
+@keyframes whiteout { 0% { opacity: 0; } 8% { opacity: 1; } 30% { opacity: .95; } 100% { opacity: 0; } }
 #word { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 64px; letter-spacing: 4px; line-height: 1.05; white-space: pre; }
 #word .done { color: #39ff9a; text-shadow: 0 0 12px #00ff80; }
 #word .cur { color: #ffe14d; border-bottom: 4px solid #ffe14d; }
