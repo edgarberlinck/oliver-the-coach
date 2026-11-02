@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #050208; color: #fff;
+  font-family: 'Inter', system-ui, sans-serif; user-select: none; }
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.hidden { display: none !important; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#top { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; gap: 14px; }
+.panel { background: linear-gradient(180deg, rgba(20,10,40,.72), rgba(10,5,20,.55)); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px; padding: 10px 16px; backdrop-filter: blur(6px); box-shadow: 0 8px 30px rgba(0,0,0,.4); min-width: 170px; }
+.label { font-size: 11px; letter-spacing: 3px; opacity: .65; font-weight: 700; }
+#score, #crowd { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 42px; line-height: 1; }
+#multi, #combo, #levelTag { font-weight: 900; font-size: 14px; color: #7ff; }
+#multi.mythic, #combo.mythic { color: #ffb020; text-shadow: 0 0 10px #ff5000, 0 0 20px #ff2000; animation: pulse .4s infinite alternate; }
+#powerPanel { flex: 0 1 520px; text-align: center; }
+#powerBar { margin: 8px 0 6px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.08); overflow: hidden;
+  border: 1px solid rgba(255,255,255,.2); }
+#powerFill { height: 100%; width: 60%; border-radius: 11px; transition: width .25s, background .5s;
+  background: linear-gradient(90deg, #00e0ff, #7a5cff, #ff3cac); box-shadow: 0 0 18px #7a5cff; }
+#powerFill.low { background: linear-gradient(90deg, #ff2020, #ff7a00); animation: pulse .3s infinite alternate; }
+#powerFill.mythic { background: linear-gradient(90deg, #ff2000, #ff9000, #fff060); box-shadow: 0 0 25px #ff6000; }
+#crowdPanel { text-align: right; }
+
+#flash { position: absolute; top: 28%; left: 0; right: 0; text-align: center; font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 84px; letter-spacing: 3px; opacity: 0; transform: scale(.6); text-shadow: 0 0 20px currentColor, 0 4px 0 #000; }
+#flash.show { animation: flash 1.3s ease-out forwards; }
+
+#bottom { position: absolute; left: 0; right: 0; bottom: 26px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+#bubble { max-width: 760px; background: #fff; color: #111; padding: 12px 20px; border-radius: 18px; font-size: 18px; font-weight: 700;
+  position: relative; box-shadow: 0 10px 30px rgba(0,0,0,.5); font-style: italic; }
+#bubble::after { content: ''; position: absolute; left: 50%; top: -12px; border: 12px solid transparent; border-bottom-color: #fff; border-top: 0; }
+#bubble b { color: #e0115f; font-style: normal; }
+#wordCard { background: rgba(8,4,18,.82); border: 2px solid rgba(120,220,255,.5); border-radius: 18px; padding: 14px 34px 12px;
+  min-width: 380px; text-align: center; box-shadow: 0 0 40px rgba(80,180,255,.25); transition: border-color .2s; }
+#wordCard.err { animation: shake .3s; border-color: #ff3050; box-shadow: 0 0 40px rgba(255,40,60,.6); }
+#wordCard.mythic { border-color: #ff9a20; box-shadow: 0 0 50px rgba(255,110,0,.7); }
+#word { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 64px; letter-spacing: 4px; line-height: 1.05; white-space: pre; }
+#word .done { color: #39ff9a; text-shadow: 0 0 12px #00ff80; }
+#word .cur { color: #ffe14d; border-bottom: 4px solid #ffe14d; }
+#word .rest { color: #fff; opacity: .9; }
+#timer { height: 8px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 6px; }
+#timerFill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff3050, #ffd000, #39ff9a); }
+#hint { font-size: 12px; opacity: .5; letter-spacing: 1px; }
+
+.overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(20,0,40,.35), rgba(0,0,0,.8)); }
+.card { background: linear-gradient(160deg, rgba(30,10,60,.92), rgba(10,4,24,.95)); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 24px; padding: 36px 46px; max-width: 640px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,40,80,.2); }
+.logo { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 26px; letter-spacing: 6px; color: #fff; }
+.logo .q { color: #ff1f4b; text-shadow: 0 0 12px #ff1f4b; }
+.logo .talks { color: #ff1f4b; }
+.card h1 { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 96px; line-height: .95; letter-spacing: 8px;
+  background: linear-gradient(180deg, #fff, #ffcf6b 60%, #ff4d00); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255,120,0,.5)); }
+.card h2 { font-weight: 400; letter-spacing: 4px; opacity: .8; margin-bottom: 16px; }
+.card p { opacity: .9; margin-bottom: 12px; line-height: 1.5; }
+.card ul { list-style: none; text-align: left; margin: 0 auto 18px; display: inline-block; line-height: 1.8; font-size: 15px; }
+.opts { display: flex; gap: 22px; justify-content: center; margin-bottom: 20px; font-size: 14px; opacity: .85; }
+.opts input { accent-color: #ff1f4b; }
+button { pointer-events: auto; font-family: 'Bebas Neue', Impact, sans-serif; font-size: 32px; letter-spacing: 3px; color: #fff; border: 0;
+  padding: 12px 40px; border-radius: 50px; cursor: pointer; background: linear-gradient(90deg, #ff1f4b, #ff7a00);
+  box-shadow: 0 8px 30px rgba(255,40,80,.5); transition: transform .15s; }
+button:hover { transform: scale(1.06); }
+.small { margin-top: 12px; font-size: 13px; opacity: .6; }
+#stats { font-size: 18px; line-height: 1.9; margin: 8px 0 22px; }
+#stats b { color: #ffcf6b; font-size: 22px; }
+
+@keyframes pulse { from { opacity: 1; } to { opacity: .6; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-12px); } 40% { transform: translateX(10px); }
+  60% { transform: translateX(-7px); } 80% { transform: translateX(4px); } }
+@keyframes flash { 0% { opacity: 0; transform: scale(.5); } 15% { opacity: 1; transform: scale(1.12); } 30% { transform: scale(1); }
+  75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.05) translateY(-30px); } }

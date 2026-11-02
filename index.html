@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oliver — Your Quantum Coach</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div id="hud" class="hidden">
+    <div id="top">
+      <div class="panel" id="scorePanel">
+        <div class="label">SCORE</div>
+        <div id="score">0</div>
+        <div id="multi">x1</div>
+      </div>
+      <div class="panel" id="powerPanel">
+        <div class="label">COACH POWER</div>
+        <div id="powerBar"><div id="powerFill"></div></div>
+        <div id="levelTag">LEVEL 1</div>
+      </div>
+      <div class="panel" id="crowdPanel">
+        <div class="label">AUDIENCE</div>
+        <div id="crowd">0</div>
+        <div id="combo">COMBO 0</div>
+      </div>
+    </div>
+
+    <div id="flash"></div>
+
+    <div id="bottom">
+      <div id="bubble"></div>
+      <div id="wordCard">
+        <div id="word"></div>
+        <div id="timer"><div id="timerFill"></div></div>
+      </div>
+      <div id="hint">Type the word before the audience gets bored. No backspace. No mercy.</div>
+    </div>
+  </div>
+
+  <div id="menu" class="overlay">
+    <div class="card">
+      <div class="logo"><span class="q">Q</span>UANTUM <span class="talks">TALKS</span></div>
+      <h1>OLIVER</h1>
+      <h2>Your Quantum Coach</h2>
+      <p>Oliver is live on stage. The audience is <b>fragile</b>. Type the buzzwords he needs, correctly and on time.</p>
+      <ul>
+        <li>✔ Clean word = <b>+1 combo</b>, audience cheers, people walk in through the door.</li>
+        <li>🔥 <b>10x combo</b> = <b>MYTHICAL COACH POWER</b> — points x10, Oliver catches fire.</li>
+        <li>✖ Typos &amp; timeouts = people leave, tomatoes fly, Oliver loses coach power.</li>
+        <li>💀 Coach power hits zero = talk is over.</li>
+      </ul>
+      <div class="opts">
+        <label><input type="checkbox" id="optMusic" checked /> Music &amp; SFX</label>
+        <label><input type="checkbox" id="optVoice" /> Oliver's voice (speech synthesis)</label>
+      </div>
+      <button id="startBtn">GO ON STAGE ▶</button>
+      <div class="small">or press <b>Enter</b> &middot; Best: <span id="best">0</span></div>
+    </div>
+  </div>
+
+  <div id="over" class="overlay hidden">
+    <div class="card">
+      <h1>TALK OVER</h1>
+      <h2 id="overQuote"></h2>
+      <div id="stats"></div>
+      <button id="againBtn">BOOK ANOTHER TALK ▶</button>
+      <div class="small">or press <b>Enter</b></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
