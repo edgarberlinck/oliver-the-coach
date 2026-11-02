@@ -49,6 +49,14 @@ body.jobs #flash { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
 #word .done { color: #39ff9a; text-shadow: 0 0 12px #00ff80; }
 #word .cur { color: #ffe14d; border-bottom: 4px solid #ffe14d; }
 #word .rest { color: #fff; opacity: .9; }
+/* Power phrases: smaller type that wraps, with a label */
+#wordCard.phrase { max-width: 88vw; border-color: rgba(255,80,180,.7); box-shadow: 0 0 45px rgba(255,60,170,.35); position: relative; }
+#wordCard.phrase #word { white-space: pre-wrap; letter-spacing: 2px; }
+#wordCard.phrase::before { content: 'POWER PHRASE'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  background: #ff3c9a; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 3px; padding: 3px 10px; border-radius: 8px; }
+#wordCard.phrase.mythic { border-color: #ff9a20; }
+#wordCard.phrase.jobs { border-color: #e8ecf5; }
+#wordCard.phrase.jobs::before { background: #e8ecf5; color: #000; }
 #timer { height: 8px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 6px; }
 #timerFill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff3050, #ffd000, #39ff9a); }
 #hint { font-size: 12px; opacity: .5; letter-spacing: 1px; }

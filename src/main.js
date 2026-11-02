@@ -10,6 +10,7 @@ import { Audience } from './audience.js';
 import { Particles, Projectiles } from './fx.js';
 import { Audio } from './audio.js';
 import { BY_TIER, LINES, CHEERS, FAILS, MYTHIC, GAME_OVER, JOBS_LINES, JOBS_CHEERS, JOBS } from './words.js';
+import { PHRASES, PHRASE_LINES, JOBS_PHRASE_LINES } from './phrases.js';
 
 // ---------- renderer / scene ----------
 const canvas = document.getElementById('c');
@@ -78,9 +79,18 @@ const MYTHIC_COMBO = 10, JOBS_COMBO = 100;
 const multiplier = () => (G.jobs ? 1000 : G.mythic ? 10 : 1);
 const pick = arr => arr[(Math.random() * arr.length) | 0];
 
+// Power phrases start at level 2 and get more common, up to about 1 in 3 prompts.
+const phraseChance = lv => (lv < 2 ? 0 : Math.min(0.35, 0.15 + (lv - 2) * 0.03));
+
 function pickWord() {
   if (G.intro.length) return G.intro.shift();
   const lv = G.level;
+  if (!G.word?.phrase && Math.random() < phraseChance(lv)) {
+    let p;
+    do { p = PHRASES[(Math.random() * PHRASES.length) | 0]; } while (G.recent.includes(p.text));
+    G.recent.push(p.text); if (G.recent.length > 60) G.recent.shift();
+    return p;
+  }
   const w = [Math.max(0.08, 1 - (lv - 1) * 0.16), Math.min(1, 0.35 + (lv - 1) * 0.15), Math.min(1.1, Math.max(0, (lv - 2) * 0.18))];
   let r = Math.random() * (w[0] + w[1] + w[2]), tier = 1;
   if (r > w[0]) tier = r > w[0] + w[1] ? 3 : 2;
@@ -100,8 +110,17 @@ function speak(text) {
 function nextWord() {
   G.word = pickWord(); G.idx = 0; G.errors = 0;
   const speed = Math.max(0.42, 1 - (G.level - 1) * 0.065);
-  G.timeTotal = G.timeLeft = (1.7 + G.word.text.length * 0.36) * speed + (G.word.tier === 3 ? 0.6 : 0);
-  G.line = pick(G.jobs ? JOBS_LINES : LINES);
+  if (G.word.phrase) {
+    // Phrases: reading time plus a characters-per-second budget that rises slowly
+    // (about 26 WPM at level 2, capped near 54 WPM), so long mantras stay doable.
+    const cps = Math.min(4.5, 2.2 + (G.level - 2) * 0.18);
+    G.timeTotal = G.timeLeft = 2.2 + G.word.text.length / cps;
+  } else {
+    G.timeTotal = G.timeLeft = (1.7 + G.word.text.length * 0.36) * speed + (G.word.tier === 3 ? 0.6 : 0);
+  }
+  G.line = pick(G.word.phrase ? (G.jobs ? JOBS_PHRASE_LINES : PHRASE_LINES) : (G.jobs ? JOBS_LINES : LINES));
+  ui.card.classList.toggle('phrase', !!G.word.phrase);
+  ui.word.style.fontSize = G.word.phrase ? `${Math.round(Math.max(30, Math.min(52, (window.innerWidth * 0.8) / (G.word.text.length * 0.5))))}px` : '';
   ui.bubble.innerHTML = G.line.replace('{w}', `<b>${G.word.text}</b>`);
   speak(G.line.replace('{w}', G.word.text));
   renderWord(); refreshScreen();
@@ -271,6 +290,7 @@ function completeWord() {
     } else {
       pyro(G.combo % 2 ? 1 : 2, 0.5 + G.combo * 0.06);
       if (G.combo % 5 === 0) { flash(`COMBO x${G.combo}!`, '#39ff9a'); confettiBurst(500); pyroAll(1); }
+      else if (w.phrase) { flash('POWER PHRASE!', '#ff5cb0'); confettiBurst(300); pyroAll(0.8); }
     }
   } else {
     G.score += Math.round(20 + w.text.length * 4);

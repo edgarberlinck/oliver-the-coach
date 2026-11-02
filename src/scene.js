@@ -420,7 +420,7 @@ export function drawScreen(world, { word = '', typed = 0, mythic = false, jobs =
   if (word) {
     const up = word.toUpperCase();
     let size = 170; g.font = `bold ${size}px Impact, Arial Black, sans-serif`;
-    while (g.measureText(up).width > w - 100 && size > 50) { size -= 6; g.font = `bold ${size}px Impact, Arial Black, sans-serif`; }
+    while (g.measureText(up).width > w - 100 && size > 34) { size -= 6; g.font = `bold ${size}px Impact, Arial Black, sans-serif`; }
     const total = g.measureText(up).width; let x = w / 2 - total / 2;
     g.textAlign = 'left';
     for (let i = 0; i < up.length; i++) {
@@ -448,7 +448,7 @@ function drawJobsScreen(g, w, h, word, typed, combo, title) {
   g.textAlign = 'center';
   if (word) {
     let size = 150; g.font = thin(size);
-    while (g.measureText(word).width > w - 140 && size > 50) { size -= 6; g.font = thin(size); }
+    while (g.measureText(word).width > w - 140 && size > 34) { size -= 6; g.font = thin(size); }
     const total = g.measureText(word).width; let x = w / 2 - total / 2;
     g.textAlign = 'left';
     for (let i = 0; i < word.length; i++) {
